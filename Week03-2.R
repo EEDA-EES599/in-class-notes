@@ -147,8 +147,29 @@ ggplot(data = newtips, aes(x = total_bill, y = tip/total_bill))+
   geom_point()+facet_wrap( ~ day)
 
 
-source("myfun.R")
 
+#let's make a simple bar plot.
+
+bardata=data.frame(barHeight=c(3,7,5),labels=c("one","two","three"),blo=c(2,6.5,3),bhi=c(4,7.41,5.5))
+#make a barplot
+
+ggplot(bardata,aes(x=barHeight))+geom_bar()
+ggplot(bardata,aes(x=labels,y=barHeight))+geom_bar(stat='identity',fill="magenta")
+
+
+#repeat with numeric labels
+bardata=data.frame(barHeight=c(3,7,5),labels=c(1,2,3),blo=c(2,6.5,3),bhi=c(4,7.41,5.5))
+ggplot(bardata,aes(x=labels,y=barHeight))+geom_bar(stat='identity',fill="magenta")
+
+#add error bars
+ggplot(bardata,aes(x=labels,y=barHeight))+
+  geom_bar(stat='identity',fill="magenta")+
+  geom_errorbar(aes(ymin=blo,ymax=bhi))
+
+#add static error bars
+ggplot(bardata,aes(x=labels,y=barHeight))+
+  geom_bar(stat='identity',fill="magenta")+
+  geom_errorbar(ymin=1,ymax=7.5)
 
 
 
