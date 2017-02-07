@@ -1,3 +1,58 @@
+
+#====================================================
+## some rudimentaries / pre-requisities
+
+## Column vector and transpose
+a = c(1,3,2)
+t(a)
+
+## inner product of two column vectors
+b = c(2,8,9)
+sum(a*b)
+
+#norm (length) of vector a
+sqrt(sum(a*a))
+
+#matrices
+
+# R will read by column
+A = matrix(c(1,3,2,2,8,9),ncol=3)
+
+# you can override this by using byrow=True
+A2 = matrix(c(1,3,2,2,8,9),ncol=3,byrow=T)
+
+# you can also construct matrices using rbind ('bind' vectors by row)
+A3 = rbind( c(1,3,2), c(2,8,9) )
+
+#Multiplication of matrix by a scalar
+7 * A
+
+#tranpose works the same way as on vectors
+t(A)
+
+# matrix - vector product
+A%*%a
+
+# matrix - matrix product
+
+B = matrix(c(5,8,4,2,6,7), ncol=2, nrow=3)
+
+A%*%B
+
+# diagonal matrix
+diag(c(1,2,3))
+
+## you can also use 'diag' to construct an identity matrix
+diag(1,3)
+
+##diag will also return the diagonal elements of a matrix
+diag(A%*%B)
+
+
+
+#====================================================
+## start of class
+
 link = 'https://classroom.github.com/assignment-invitations/80d7d687d24fa2d9d5ef0471bf4261f3'
 
 shell.exec(link)
