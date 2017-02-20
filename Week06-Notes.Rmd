@@ -1,8 +1,9 @@
 ---
 title: "Variance, Covariance, Correlation"
 output:
-  html_document: default
+  pdf_document: default
   html_notebook: default
+  html_document: default
 ---
 
 # Variance, Covariance, Correlation
@@ -97,9 +98,9 @@ $$\sqrt{var_x * var_y}$$
 So the relative amount of the highest covariance is
 
 $$\rho = \frac{cov}{\sqrt{var_x * var_y}}$$
-This is called *correlation*, and \rho is the correlation coefficient.
+This is called *correlation*, and $\rho$ is the correlation coefficient.
 
-Let's calculate \rho for each of our covariances above and see which is higher.
+Let's calculate $\rho$ for each of our covariances above and see which is higher.
 
 ```{r}
 maxCovHV = sqrt(t(height.anom)%*%height.anom * t(volume.anom)%*%(volume.anom))
@@ -121,10 +122,10 @@ Phew. It worked.
 
 ##Fraction of Variance. 
 
-So if we square \rho, get:
+So if we square $\rho$, get:
 
 $$\rho^2 = \frac{cov^2}{var_x*var_y}$$
-Which compares the covariance, to the total variance in both datasets. This is why it's reasonable to think of \rho^2 as the fraction of total variance explained by the covariance.
+Which compares the covariance, to the total variance in both datasets. This is why it's reasonable to think of $\rho^2$ as the fraction of total variance explained by the covariance.
 
 
 ##Significance testing
