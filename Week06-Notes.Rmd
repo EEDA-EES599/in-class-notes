@@ -1,9 +1,9 @@
 ---
 title: "Variance, Covariance, Correlation"
 output:
-  pdf_document: default
-  html_notebook: default
   html_document: default
+  html_notebook: default
+  pdf_document: default
 ---
 
 # Variance, Covariance, Correlation
@@ -12,7 +12,9 @@ output:
 
 Variance is a simple way of quantifying the amount of variability around a mean in a dataset. It's calculated simply as the sum of squares of the data, after subtracting the mean of the data. Or in linear algebra:
 
-$$Variance = (x - \bar{x})^T (x - \bar{x})$$
+$$Variance = \frac{(x - \bar{x})^T (x - \bar{x})}{df}$$
+And df is usually N-1
+
 Let's examine this with some data in R, will use the dataset "trees"
 
 ```{r}
@@ -23,8 +25,10 @@ head(trees)
 Let's calculate the variance of the tree girth.
 ```{r}
 girthAnom = trees[,1]-mean(trees[,1])
-girthVar = t(girthAnom)%*%girthAnom
+girthVar = t(girthAnom)%*%girthAnom / (length(girthAnom)-1)
 print(girthVar)
+#check it
+var(trees[,1])
 ```
 What are the units of this variance?
 
@@ -57,14 +61,18 @@ ggplot(trees,aes(x=Height, y=Volume)) + geom_point()
 ```
 OK, there's clearly a relationship, so let's calculate the covariance. The equation for covariance is just like variance: 
 
-$$Coariance = (x - \bar{x})^T (y - \bar{y})$$
+$$Covariance = \frac{(x - \bar{x})^T (y - \bar{y})}{df}$$
+and df is typically N-1
+
 In R:
 
 ```{r}
 height.anom = trees$Height - mean(trees$Height)
 volume.anom = trees$Volume - mean(trees$Volume)
-covarianceHV = t(height.anom) %*% volume.anom
+covarianceHV = t(height.anom) %*% volume.anom / (length(trees$Volume)-1)
 print(covarianceHV)
+#check it 
+cov(trees$Height,trees$Volume)
 
 ```
 What are the units on that number?
@@ -76,8 +84,10 @@ OK, let's compare that with covariance between Girth and Volume:
 ```{r}
 girth.anom = trees$Girth - mean(trees$Girth)
 volume.anom = trees$Volume - mean(trees$Volume)
-covarianceGV = t(girth.anom) %*% volume.anom
+covarianceGV = t(girth.anom) %*% volume.anom / (length(trees$Volume)-1)
 print(covarianceGV)
+#check it
+cov(girth.anom,volume.anom)
 
 ```
 
@@ -103,8 +113,8 @@ This is called *correlation*, and $\rho$ is the correlation coefficient.
 Let's calculate $\rho$ for each of our covariances above and see which is higher.
 
 ```{r}
-maxCovHV = sqrt(t(height.anom)%*%height.anom * t(volume.anom)%*%(volume.anom))
-maxCovGV =  sqrt(t(girth.anom)%*%girth.anom * t(volume.anom)%*%(volume.anom))
+maxCovHV = sqrt(t(height.anom)%*%height.anom / (length(height.anom)-1) * t(volume.anom)%*%(volume.anom) / (length(height.anom)-1))
+maxCovGV =  sqrt(t(girth.anom)%*%girth.anom / (length(height.anom)-1) * t(volume.anom)%*%(volume.anom)  / (length(height.anom)-1))
 
 rhoHV = covarianceHV/maxCovHV
 rhoGV = covarianceGV/maxCovGV
