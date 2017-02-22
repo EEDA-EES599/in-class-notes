@@ -1,9 +1,9 @@
 ---
 title: "Variance, Covariance, Correlation"
 output:
-  html_document: default
-  html_notebook: default
   pdf_document: default
+  html_notebook: default
+  html_document: default
 ---
 
 # Variance, Covariance, Correlation
@@ -176,21 +176,21 @@ ggplot(beaver1)+geom_histogram(aes(x=temp,y=..density..))+geom_vline(xintercept 
 ```
 Student T distributions, by definition, always have a mean of zero. Let's make our data have a mean of zero and a standard deviation of 1, and then we can compare it to a Students' T.
 
+
 ```{r}
 #Lets take a look at our observations
 myplot = ggplot(beaver1)+geom_histogram(aes(x=(temp-mean(temp))/(sd(temp)/sqrt(length(beaver1$temp))),y=..density..))+geom_vline(aes(xintercept = (37-mean(beaver1$temp))/(sd(beaver1$temp)/sqrt(length(beaver1$temp))),color="red"))
 #and let's add a tdistribution
 td = dt(seq(-3,3,by=.1),df=length(beaver1$temp)-2)
 ndf = data.frame(x=seq(-3,3,by=.1),y=td)
-
-myplot+geom_area(data=ndf,aes(x=x,y=y),fill="red",alpha=0.5)
-
+yplot+geom_area(data=ndf,aes(x=x,y=y),fill="red",alpha=0.5)
 ```
 
-Again, we're no longer comparing to see if the mean temperature is less than 37, we've converted 37 into T-distribution space by subtracting the mean and dividing by the standard deviation.
+
+Again, we're no longer comparing to see if the mean temperature is less than $37$, we've converted $37$ into T-distribution space by subtracting the mean and dividing by the standard deviation.
 
 ```{r}
-Tstat = (37-mean(beaver1$temp))/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
+#Tstat = (37-mean(beaver1$temp))/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
 print(Tstat)
 ```
 
@@ -237,6 +237,50 @@ x=tstatHi#x can be positive or negative now!
 pt(-abs(x),df=length(beaver1$temp))*2
 
 ```
+
+##Monte-carlo methods
+Let's imagine a different way to do this analysis. What if instead using a probability distribution, we wanted to just simulate the mean 1000 times, and see the probability that it's outside the range of the we defined above that way?
+
+Using random number generators to make large simulations of data, and then looking at those results is a class of methods called "Monte Carlo" methods.
+
+We'll use rnorm() to generate a our beaver temperature data 1000 times. 
+
+```{r}
+bmean = mean(beaver1$temp)
+bsd = sd(beaver1$temp)
+nits = 1000
+simBeaverMean = matrix(NA,nits,1)
+for(i in 1:nits){#for every iteration
+  simBeaver = rnorm(n = length(beaver1$temp),mean = bmean,sd=bsd)
+  simBeaverMean[i] = mean(simBeaver)
+  
+  }
+
+
+```
+OK, now we've calculated 1000 random means, let's see what that distribution looks like:
+
+```{r}
+hiTemp = mean(beaver1$temp)+0.03
+loTemp = mean(beaver1$temp)-0.03
+ggplot()+geom_histogram(aes(x=simBeaverMean))+geom_vline(aes(xintercept=loTemp))+geom_vline(aes(xintercept=hiTemp))
+```
+
+And now let's figure what where are 95% confidence interval is...
+```{r}
+quantile(simBeaverMean,c(0.025,0.975))
+```
+
+Or, what probabilities our hi or low temperature ranges correspond to
+
+```{r}
+beaverCDF = ecdf(simBeaverMean)
+ourProbs = beaverCDF(c(loTemp,hiTemp))
+totalExtremeProb = ourProbs[1]+(1-ourProbs[2])
+```
+
+
+
 
 ##Side note - functions with multiple outputs.
 One last thing. It's often useful to calculate values with multiple, and sometimes different kinds of outputs. But R only lets you export one thing from a function, and then it ends. Do this, you should take advantage of R's most general data type, the *list*. Think of a list as a bucket of any other kind of data with a name. Here's an example:
