@@ -1,9 +1,9 @@
 ---
 title: "Variance, Covariance, Correlation"
 output:
-  html_document: default
-  html_notebook: default
   pdf_document: default
+  html_notebook: default
+  html_document: default
 ---
 
 # Variance, Covariance, Correlation
@@ -279,6 +279,76 @@ ourProbs = beaverCDF(c(loTemp,hiTemp))
 totalExtremeProb = ourProbs[1]+(1-ourProbs[2])
 ```
 
+##Bootstrapping
+In bootstrapping, rather than specifying a distribution and its parameters from which to simulate the data, we resample our observations, with replacement, to get at our distribution:
+
+```{r}
+nits = 1000
+simBeaverMean = matrix(NA,nits,1)
+for(i in 1:nits){
+  simBeaver = sample(beaver1$temp,size = length(beaver1$temp),replace = TRUE)
+  simBeaverMean[i] = mean(simBeaver)
+}
+```
+
+Once we have that, we analyze that and plot as we did before:
+
+```{r}
+#So now we have 1000 possible means from our dataset
+#let's take a look
+hiTemp = bmean+0.03
+loTemp = bmean-0.03
+ggplot()+geom_histogram(aes(x=simBeaverMean))+geom_vline(aes(xintercept=loTemp))+
+  geom_vline(aes(xintercept = hiTemp))
+
+#lets use our simulated results to calculate a 95% confidence interval on our mean
+quantile(simBeaverMean,c(0.025, 0.975))
+
+#what about figuring out percentiles, given a certain critical value?
+beaverCDF = ecdf(simBeaverMean)
+ourProbs = beaverCDF(c(loTemp,hiTemp))
+print(ourProbs)
+totalExtremeProb = ourProbs[1]+(1-ourProbs[2])
+print(totalExtremeProb)
+```
+
+##Jackknifing
+
+Something similar to bootstrapping, but not random and more explicit, is called jackknifing, where we repeat our analysis n times, removing one observation from our analysis each time through:
+
+```{r}
+#One last example: Jackknifing
+simBeaverMean = matrix(NA,length(beaver1$temp),1)
+for(i in 1:length(beaver1$temp)){
+  simBeaver = beaver1$temp[-i]
+  simBeaverMean[i] = mean(simBeaver)
+}
+```
+
+Again, once we have our simulated values, we can analyze it the same way:
+
+
+```{r}
+
+#So now we have 1000 possible means from our dataset
+#let's take a look
+hiTemp = bmean+0.03
+loTemp = bmean-0.03
+ggplot()+geom_histogram(aes(x=simBeaverMean))+geom_vline(aes(xintercept=loTemp))+
+  geom_vline(aes(xintercept = hiTemp))
+
+#lets use our simulated results to calculate a 95% confidence interval on our mean
+quantile(simBeaverMean,c(0.025, 0.975))
+
+#what about figuring out percentiles, given a certain critical value?
+beaverCDF = ecdf(simBeaverMean)
+ourProbs = beaverCDF(c(loTemp,hiTemp))
+print(ourProbs)
+totalExtremeProb = ourProbs[1]+(1-ourProbs[2])
+print(totalExtremeProb)
+
+
+```
 
 
 
