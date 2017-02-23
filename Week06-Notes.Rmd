@@ -1,9 +1,9 @@
 ---
 title: "Variance, Covariance, Correlation"
 output:
-  pdf_document: default
-  html_notebook: default
   html_document: default
+  html_notebook: default
+  pdf_document: default
 ---
 
 # Variance, Covariance, Correlation
@@ -183,14 +183,14 @@ myplot = ggplot(beaver1)+geom_histogram(aes(x=(temp-mean(temp))/(sd(temp)/sqrt(l
 #and let's add a tdistribution
 td = dt(seq(-3,3,by=.1),df=length(beaver1$temp)-2)
 ndf = data.frame(x=seq(-3,3,by=.1),y=td)
-yplot+geom_area(data=ndf,aes(x=x,y=y),fill="red",alpha=0.5)
+myplot+geom_area(data=ndf,aes(x=x,y=y),fill="red",alpha=0.5)
 ```
 
 
 Again, we're no longer comparing to see if the mean temperature is less than $37$, we've converted $37$ into T-distribution space by subtracting the mean and dividing by the standard deviation.
 
 ```{r}
-#Tstat = (37-mean(beaver1$temp))/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
+Tstat = (37-mean(beaver1$temp))/(sd(beaver1$temp)/sqrt(length(beaver1$temp)))
 print(Tstat)
 ```
 
