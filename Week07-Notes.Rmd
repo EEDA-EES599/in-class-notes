@@ -151,8 +151,9 @@ And then we can use pnorm to calculate the area right of 80...
 ```{r}
 1-pnorm(80,mean = pred,sd = pred.unc)
 ```
-
-
+###Side note - using geom text and hacking legends.
+#add geom text
+ggplot()+geom_area(aes(xseq,gauss,colour = "Distribution"),fill = "white")+geom_vline(aes(xintercept = 80,colour = "Critical Value"))+geom_text(aes(x = 60,y=0.02,label="this is text"))
 
 
 
