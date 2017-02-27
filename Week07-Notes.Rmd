@@ -1,0 +1,158 @@
+---
+title: "Week 07 - Regression"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document: default
+---
+
+#Linear Regression
+Last week we looked at correlation, which gives us a normalized representation of how well to datasets covary, but what if we wanted to model that relationship, or even use it for prediction.
+
+##Ordinary linear regression
+
+OLR is a simple way to create a linear model of that relates one or more vectors (X) to a target data series (Y). Let's use the airquality dataset to explore this.
+
+
+```{r}
+X=airquality$Wind
+Y=airquality$Ozone
+toRemove=which(is.na(X) | is.na(Y))
+X=X[-toRemove]
+Y=Y[-toRemove]
+plot(X,Y)
+```
+
+In regression, we will refer to X as the design matrix. This is the matrix of predictors. It must have the same number of rows as Y, but can have any number of columns. The number of columns will correspond to the number of coefficients in the model. We represent these coefficients in a column vector that has as many rows as there are columns in X. 
+
+Lets make our design matrix. It will be Wind, plus a column of ones so we can get a Y intercept in our model.
+
+```{r}
+ones=matrix(1,nrow=length(X))
+length(X)
+Xd=cbind(ones,X) #this is our design matrix
+```
+
+Linear algebra doesn't love NAs, let's make sure we've removed them all.
+
+```{r}
+any(is.na(Xd))
+```
+
+Remember that in OLS, we're trying to minimize the sum of squares of the residuals, or the error, which we call E. 
+
+$Y = Xb + E$
+
+Where Y is a column of predictands, X is our design matrix, b is our column of coefficients, and E is the error, the difference between Xb and Y. We want to find b that makes the sum of squares in E as small as possible.
+
+We refered to the derivation of this on the board, and will now use the result of this, called the "Normal equation" to find b, that minimize the sum of squares if E.
+
+```{r}
+#Use normal equation (X'X)-1 * (X'Y)
+XX=t(Xd)%*%Xd
+XY=t(Xd)%*%Y
+B=solve(XX)%*%XY
+print(B)
+```
+
+OK. That was easy, now we have our model. Let's see how well it works.
+
+Let's use the model to calculate predicted Y over the interval 0 to 20.
+
+```{r}
+xseq=seq(0,20)
+yhat=xseq*B[2]+B[1] #just calculating it as a simple y=mx+b type equation.
+#now lets plot the original data, and add a line for our model.
+library(ggplot2)
+regPlot = ggplot()+geom_point(aes(X,Y))+geom_line(aes(xseq,yhat))
+print(regPlot)
+```
+Rather than calculating Yhat the slow way by spelling out the linear equation, we can do it simply using the design matrix, to model the values present in X. Or creating a new design matrix to model any range in X.
+
+Remember, our equation was 
+$Y = Xb + E$
+so
+$\hat{Y} = Xb$
+```{r}
+yhat2 = Xd%*%B
+ggplot()+geom_point(aes(X,Y))+geom_point(aes(X,yhat2),colour = "red")
+```
+The difference between Y and Yhat is our E. It's also called the residuals. Let's take a look at our residuals.
+
+```{r}
+residuals = Y-yhat2
+ggplot()+geom_point(aes(X,residuals)) #as a line plot
+ggplot()+geom_histogram(aes(X)) #as a histogram
+
+```
+
+
+##Uncertainty in our regression model
+Our model is not a perfect representation of reality, and we'd like to estimate the uncertainty on our parameters in B. We're going to base this on the residuals. 
+
+First we need to calculate the root mean squared error (RMSE) of our residuals:
+
+```{r}
+SSE = t(residuals)%*%residuals
+MSE = SSE / (length(Y)-length(B)) #the degrees of freedom here is the number of observations minus the number of parameters we calculated
+#Now moving forward we want the root mean square error (RMSE) or s .
+s = sqrt(MSE)
+print(s)
+```
+
+OK, now that we have an estimate of $\sigma$ for our residuals, we can use that to find the covariance matrix of B, like this:
+
+```{r}
+#Now, let's use s to calculate uncertainty on B
+#Find the covariance of B. Using this equation
+covB = solve(t(Xd)%*%Xd)*as.vector(s^2)
+print(covB)
+```
+
+This is the covariance matrix of B, and the standard error of B is the square root of the diagonal:
+
+```{r}
+stdB = diag(sqrt(covB))
+print(stdB)
+```
+OK, now let's calculate some line that show the uncertainty in our model. We'll show one standard error. This means that our regression parameters could be higher or lower than we calculated. So we'll calculate some new $\hat{Y}$ values for hi and low values. 
+
+```{r}
+#OK now calculate lines that correspond to the uncertainty
+yhatHi = Xd%*%(B+stdB)
+yhatLo = Xd%*%(B-stdB)
+```
+
+Now let's add those to our plot.
+
+```{r}
+ggplot()+geom_ribbon(aes(x=X,ymin = yhatLo,ymax = yhatHi),fill = "red")+geom_point(aes(X,Y))+geom_line(aes(xseq,yhat))
+```
+
+Lastly, what if we want to estimate the uncertainty on certain prediction?
+
+Just create a desing matrix for that prediction!
+
+```{r}
+X5 = c(1, 5)#Create a single value design matrix to make a prediction
+pred = X5%*%B#multiply that matrix by B to get you modeled prediction
+pred.unc = X5%*%stdB#multiply that matrix by std error of B to get uncertainty on prediction
+```
+If we assume that prediction is normal, with a mean of the prediction and a standard deviation of the probability, what's probability in our prediction that if the wind is blowing 5 mph, the ozone concentration will be above 80?
+
+Let's make a plot to visualize what we're testing:
+```{r}
+xseq = seq(40,98,length.out = 100)
+gauss = dnorm(xseq,mean = pred,sd=pred.unc)
+ggplot()+geom_area(aes(xseq,gauss),fill = "white")+geom_vline(xintercept = 80)
+```
+
+And then we can use pnorm to calculate the area right of 80...
+```{r}
+1-pnorm(80,mean = pred,sd = pred.unc)
+```
+
+
+
+
+
