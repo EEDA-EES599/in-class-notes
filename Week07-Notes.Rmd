@@ -1,9 +1,9 @@
 ---
 title: "Week 07 - Regression"
 output:
-  pdf_document: default
-  html_notebook: default
   html_document: default
+  html_notebook: default
+  pdf_document: default
 ---
 
 #Linear Regression
@@ -154,6 +154,117 @@ And then we can use pnorm to calculate the area right of 80...
 ###Side note - using geom text and hacking legends.
 #add geom text
 ggplot()+geom_area(aes(xseq,gauss,colour = "Distribution"),fill = "white")+geom_vline(aes(xintercept = 80,colour = "Critical Value"))+geom_text(aes(x = 60,y=0.02,label="this is text"))
+
+
+##Multiple Regression
+OK, so what if we decide we want to use more to make our prediction? Maybe Solar radiation could help predict as well. And why not throw in temperature too?
+
+We want to set up our design matrix such that 
+
+$Y = b_0 + b_1x_1 + b_2x_2 + b_3x_3$
+
+so what would our design matrix look like?
+
+```{r}
+airqualityGood = na.omit(airquality)
+
+X1 = airqualityGood$Wind
+X2 = airqualityGood$Solar.R
+X3 = airqualityGood$Temp
+Y = airqualityGood$Ozone
+ones = matrix(1,nrow = length(Y))
+#so our design matrix is
+Xd2 = cbind(ones,X1,X2,X3)
+```
+#OK - now easy peasy, use your normal equations.
+
+```{r}
+#Use normal equation (X'X)-1 * (X'Y)
+XX=t(Xd2)%*%Xd2
+XY=t(Xd2)%*%Y
+B=solve(XX)%*%XY
+print(B)
+```
+
+Great - how can we plot this? 
+
+Just calculate Yhat, and plot Y vs Yhat
+
+```{r}
+Yhat = Xd2%*%B
+ggplot()+geom_point(aes(Yhat,Y))+geom_line(aes(c(-25,175),c(-25,175)),colour = "red")
+
+```
+
+
+ How about uncertainty? It's also the same.
+
+```{r}
+#UNCERTAINTY IS DONE THE SAME WAY
+residuals = Y-Yhat
+SSE = t(residuals)%*%residuals
+MSE = SSE / (length(Y)-length(B))
+#Now moving forward we want the root mean square error (RMSE) or s .
+s = sqrt(MSE)
+covB = solve(t(Xd2)%*%Xd2)*as.vector(s^2)
+stdB = diag(sqrt(covB))
+stdB
+```
+Which of our variables is most important? Depends how you define it...
+
+We could look at the ratio of the coefficients to their standard deviations...
+
+```{r}
+B/apply(Xd2,2,sd)
+
+#or we could look at the ratio of the standard errors to the coefficients - this tells us something different though
+stdB/B
+
+#Or we could model each individually, and see which has the smallest standard errors...
+
+```
+
+There's still a curve in those data that we're not capturing... 
+
+Perhaps we think that we could model Ozone better with a 2nd-order polynomial of windspeed than a line.
+
+$Y = b_0 + b_1x + b_2x^2$
+
+Easy now, we just set up a new design matrix:
+
+```{r}
+Xd3 = cbind(ones,X1,X1^2)
+
+#Use normal equation (X'X)-1 * (X'Y)
+XX=t(Xd3)%*%Xd3
+XY=t(Xd3)%*%Y
+B=solve(XX)%*%XY
+print(B)
+
+```
+
+And calculate our predictions and plot..
+
+```{r}
+Yhat = Xd3%*%B
+ggplot()+geom_point(aes(Yhat,Y))+geom_line(aes(c(-25,175),c(-25,175)),colour = "red")
+
+```
+
+
+
+```{r}
+#UNCERTAINTY IS DONE THE SAME WAY
+residuals = Y-Yhat
+SSE = t(residuals)%*%residuals
+MSE = SSE / (length(Y)-length(B))
+#Now moving forward we want the root mean square error (RMSE) or s .
+s = sqrt(MSE)
+covB = solve(t(Xd3)%*%Xd3)*as.vector(s^2)
+stdB = diag(sqrt(covB))
+stdB
+```
+
 
 
 
