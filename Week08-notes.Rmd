@@ -1,0 +1,97 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document: default
+---
+
+#Principal Components Analysis
+
+Let's look for the modes of variability in this diamonds dataset:
+
+```{r}
+library(ggplot2)
+head(diamonds)
+#let's make a big plot avoiding the three rows that aren't data
+plot(diamonds[1:100,-c(2,3,4)])
+
+Xraw = diamonds[1:1000,-c(2,3,4)]
+
+```
+
+
+OK, now we need to calculate a covariance matrix 
+```{r}
+#subtract the mean from each column. We can do this easily with scale()
+
+#and use scale() to subtract that mean.
+X = scale (Xraw, scale=TRUE)
+#what does the scale=FALSE do?
+X2= scale (Xraw, scale=FALSE)
+
+head(X)
+head(X2)
+
+#let's calculate our covariance matrix:
+coMat  = (t(X)%*%X)/ (nrow(X)-1)
+head(coMat)
+#compare that to a correlation matrix
+head(cor(Xraw))
+```
+Aha, so a scaled covariance matrix is identical to a correlation matrix. Good to know.
+
+So let's do PCA on the correlation matrix, since the units are different in our column
+
+```{r}
+#Now that we have our covariance/correlation matrix, we can use svd to find the eigen values and vectors:
+out = svd(coMat)
+names(out)
+```
+OK, remember our SVD formulation
+
+$A = EDE^T$
+
+Where A is our covariance matrix, E is our eigenvectors, and D is our Eigenvalues?
+svd names E=U, and $E^T$ = V
+
+We can also think our eigen matrix as our new covariance matrix, with zeros off the diagonal.
+
+```{r}
+print(out$d)#svd returns only, the diagonal.
+
+#so our total covariance is just the sum of out$d
+sum(out$d)
+
+#and the fraction of variance in each is
+out$d/sum(out$d)
+```
+OK, so now we have 7 indepenent modes of variability, that explain all the variance, independently.
+
+But can we take our data, and "project it" onto this new coordinate system. Yes we can!
+
+
+```{r}
+PCs = (X %*% out$v) #this is our projection of our data on the eigen vectors. We call this the PC score. 
+dim(PCs)
+cov(PCs)#did it work? If so each PC score should be uncorrelated with all the others. 
+```
+
+OK, great. How can we explore these data?
+```{r}
+df = cbind(as.data.frame(PCs),diamonds[1:nrow(X),]) #let's make a big data frame with the original data, and our PCs
+df2 = cbind(as.data.frame(out$v),names(diamonds[,-c(2,3,4)])) #and a second with just the eigenvectors
+names(df2)[8]="names"
+arrowScale=6 #lets setup the length of our arrows as a variable
+ggplot(df, aes(x = V1, y= V2))+#and make an awesome plot, we're going to compare PC1 and 2
+  geom_point(aes(colour=cut),size=6)+ #first just plotting points and colouring them by the cut
+  geom_hline(yintercept=0)+geom_vline(xintercept=0)+#then we'll plot some 0 lines for our reference
+  coord_fixed(xlim=c(-5,5),ylim=c(-5,5))+#and set the scale
+  geom_segment(data=df2,aes(x=0,y=0,xend = V1*arrowScale, yend = V2*arrowScale))+#Now we'll add lines that correspond to our eigen vectors
+  geom_text(data=df2,aes(x = V1*arrowScale, y = V2*arrowScale,label=names) )#and label those lines
+
+```
+
+
+#More on Wednesday!
+
