@@ -93,5 +93,95 @@ ggplot(df, aes(x = V1, y= V2))+#and make an awesome plot, we're going to compare
 ```
 
 
-#More on Wednesday!
+#Mapping!
+To map, we will use the ggmap package which integrates nicely with ggplot
+
+```{r}
+#install.packages("ggmap")
+library(ggmap)
+```
+And for fun, let's take a look at a spatial database of vehicle accidents...
+```{r}
+mydata = read.csv("vehicle-accidents.csv")
+head(mydata)
+
+```
+And reformat the data slightly to make it map better
+
+```{r}
+mydata$State = as.character(mydata$State)
+mydata$MV.Number = as.numeric(mydata$MV.Number)
+```
+
+
+And get rid of the rows that will be a problem to map...
+```{r}
+#get rid of HI, AK, and the whole US total
+mydata = mydata[mydata$State != "Alaska",]
+mydata = mydata[mydata$State != "Hawaii",]
+mydata = mydata[mydata$State != "USA",]
+```
+
+
+ggmap does a lot of awesome things. One them is the geocode() function
+```{r}
+NAU = geocode("Northern Arizona University")
+print(c(NAU$lat,NAU$lon))
+```
+Notice that there are no coordinates in our database. Let's use geocode to get coordinates for our map:
+
+```{r}
+#get latitude and longitude
+for (i in 1:nrow(mydata)){
+  latlon = geocode(mydata$State[i])
+  mydata$lon[i] = as.numeric(latlon[1])
+  mydata$lat[i] = as.numeric(latlon[2])
+}
+```
+
+Awesome. We're ready to make a map. ggmap works by ggplotting on a base map. There are a number of ways to make base map. One is by creating a bounding box:
+```{r}
+bb = make_bbox(lat = mydata$lat, lon = mydata$lon, f = .3)
+map = get_map(location = bb)
+```
+
+
+```{r}
+names(mydata)[3]="collisions"#let's rename that column
+
+ggmap(map)+geom_point(data=mydata,aes(x = lon, y = lat, size = collisions),colour ="red",alpha=.6)+scale_colour_continuous(low="white",high="red")
+
+```
+```{r}
+# find a reasonable spatial extent
+head(crime)
+
+qmap('houston', zoom = 13)
+# only violent crimes
+violent_crimes <- subset(crime,offense != "auto theft" & offense != "theft" & offense != "burglary")
+# order violent crimes
+violent_crimes$offense <- factor(violent_crimes$offense, levels =c("robbery", "aggravated assault","rape", "murder"))
+# restrict to downtown
+violent_crimes <- subset(violent_crimes,-95.39681 <= lon & lon <= -95.34188 & 29.73631 <= lat & lat <= 29.78400)
+```
+
+
+```{r}
+theme_set(theme_bw(16))
+HoustonMap <- qmap("houston", zoom = 14,color = "bw", legend = "topleft")
+HoustonMap + geom_point(aes(x = lon, y = lat,colour = offense, size = offense),data = violent_crimes)
+
+
+
+HoustonMap +stat_bin2d(aes(x = lon, y = lat, colour = offense,fill = offense),size = .5, bins = 30, alpha = 1/2,data = violent_crimes)
+```
+
+```{r}
+houston <- get_map("houston", zoom = 14)
+HoustonMap <- ggmap(houston,extent = "device", legend = "topleft")
+HoustonMap +stat_density2d(aes(x = lon, y = lat, fill = ..level..,alpha = ..level..),size = 2, bins = 4, data = violent_crimes,geom = "polygon")
+```
+
+
+
 
